@@ -21,7 +21,7 @@ function delDist() {
 }
 
 function styles() {
-  return src("app/sass/**/*.sass")
+  return src("app/scss/**/*.scss")
     .pipe(scss({ outputStyle: "compressed" }))
     .pipe(concat("style.min.css"))
     .pipe(
@@ -34,10 +34,24 @@ function styles() {
     .pipe(browserSync.stream());
 }
 
+function scripts() {
+  return src(["app/js/main.js"])
+    .pipe(concat("main.min.js"))
+    .pipe(uglify(/* options */))
+    .pipe(dest("app/js"))
+    .pipe(browserSync.stream());
+}
+
 function build() {
-  return src(["app/css/style.min.css", "app/*.html"], { base: "app" }).pipe(
-    dest("dist")
-  );
+  return src(
+    [
+      "app/css/style.min.css",
+      "app/fonts/**/*",
+      "app/js/main.min.js",
+      "app/*.html",
+    ],
+    { base: "app" }
+  ).pipe(dest("dist"));
 }
 
 function images() {
@@ -57,13 +71,15 @@ function images() {
 
 function watching() {
   watch(["app/scss/**/*.scss"], styles);
+  watch(["app/js/**/*.js", "!app/js/main.min.js"], scripts);
   watch(["app/*html"]).on("change", browserSync.reload);
 }
 
 exports.styles = styles;
 exports.watching = watching;
 exports.browsersync = browsersync;
+exports.scripts = scripts;
 exports.images = images;
 
 exports.build = series(delDist, images, build);
-exports.default = parallel(styles, browsersync, watching);
+exports.default = parallel(styles, scripts, browsersync, watching);
